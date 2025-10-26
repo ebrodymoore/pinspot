@@ -137,12 +137,6 @@ SUPABASE_SERVICE_ROLE_KEY=eyJ...your-service-role-key...
 GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=your-client-secret
 GOOGLE_REDIRECT_URI=https://yourdomain.vercel.app/auth/callback
-NEXTAUTH_SECRET=generate-with-openssl-rand-base64-32
-```
-
-To generate `NEXTAUTH_SECRET`:
-```bash
-openssl rand -base64 32
 ```
 
 3. Click **Save**
@@ -213,7 +207,6 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=your-client-secret
 GOOGLE_REDIRECT_URI=http://localhost:3000/auth/callback
-NEXTAUTH_SECRET=your-secret
 ```
 
 ### 3. Run Development Server

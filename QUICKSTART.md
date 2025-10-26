@@ -66,8 +66,6 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=your-client-secret
 GOOGLE_REDIRECT_URI=http://localhost:3000/auth/callback
-NEXTAUTH_SECRET=test-secret-key-change-in-production
-NEXTAUTH_URL=http://localhost:3000
 EOF
 ```
 
@@ -185,8 +183,6 @@ pinspot/
 | `GOOGLE_CLIENT_ID` | Google OAuth client ID | `xxx.apps.googleusercontent.com` |
 | `GOOGLE_CLIENT_SECRET` | Google OAuth secret | `xxx` |
 | `GOOGLE_REDIRECT_URI` | OAuth callback URL | `http://localhost:3000/auth/callback` |
-| `NEXTAUTH_SECRET` | Auth encryption key | `random-string` |
-| `NEXTAUTH_URL` | App base URL | `http://localhost:3000` |
 
 ## Testing Checklist
 
