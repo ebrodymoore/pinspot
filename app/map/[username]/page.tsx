@@ -40,6 +40,7 @@ export default function PublicProfilePage() {
               updated_at,
               photos (
                 id,
+                pin_id,
                 storage_path,
                 google_photo_id,
                 display_order,
@@ -47,6 +48,7 @@ export default function PublicProfilePage() {
               ),
               tags (
                 id,
+                pin_id,
                 tag_name
               )
             )
