@@ -73,15 +73,15 @@ export default function GooglePhotosImporter({
           </div>
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8">
-            <h3 className="font-semibold text-gray-900 mb-3">Here's what happens:</h3>
+            <h3 className="font-semibold text-gray-900 mb-3">Here&apos;s what happens:</h3>
             <ul className="space-y-2 text-sm text-gray-700">
               <li className="flex gap-2">
                 <span className="text-blue-600 font-bold">1.</span>
-                <span>We'll ask permission to access your Google Photos</span>
+                <span>We&apos;ll ask permission to access your Google Photos</span>
               </li>
               <li className="flex gap-2">
                 <span className="text-blue-600 font-bold">2.</span>
-                <span>We extract location data from your photos' metadata</span>
+                <span>We extract location data from your photos&apos; metadata</span>
               </li>
               <li className="flex gap-2">
                 <span className="text-blue-600 font-bold">3.</span>

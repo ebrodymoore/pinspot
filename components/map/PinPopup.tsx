@@ -45,16 +45,14 @@ export default function PinPopup({ pin, onSelect }: PinPopupProps) {
           </p>
           <div className="grid grid-cols-3 gap-2">
             {pin.photos.slice(0, 6).map((photo) => (
-              <div
+              <Image
                 key={photo.id}
-                className="w-full h-16 rounded overflow-hidden"
-              >
-                <img
-                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/photos/${photo.storage_path}`}
-                  alt="Travel photo"
-                  className="w-full h-full object-cover"
-                />
-              </div>
+                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/photos/${photo.storage_path}`}
+                alt="Travel photo"
+                width={64}
+                height={64}
+                className="w-full h-16 object-cover rounded"
+              />
             ))}
           </div>
         </div>

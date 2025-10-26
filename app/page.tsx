@@ -70,7 +70,7 @@ export default function Home() {
             </span>
           </h1>
           <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            Create an interactive map of all the places you've visited. Import photos from Google
+            Create an interactive map of all the places you&apos;ve visited. Import photos from Google
             Photos and explore your travel history in one beautiful interface.
           </p>
 

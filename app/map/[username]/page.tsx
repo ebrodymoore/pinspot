@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
 import type { Pin, Photo, Tag } from '@/lib/types'
 
@@ -150,7 +151,7 @@ export default function PublicProfilePage() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                {profile.username}'s Travels
+                {profile.username}&apos;s Travels
               </h1>
               <p className="text-gray-600">
                 Member since {new Date(profile.created_at).toLocaleDateString('en-US', {
@@ -245,10 +246,12 @@ export default function PublicProfilePage() {
                       </p>
                       <div className="grid grid-cols-3 gap-2">
                         {pin.photos.slice(0, 6).map((photo) => (
-                          <img
+                          <Image
                             key={photo.id}
                             src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/photos/${photo.storage_path}`}
                             alt="Travel photo"
+                            width={80}
+                            height={80}
                             className="w-full h-20 object-cover rounded"
                           />
                         ))}

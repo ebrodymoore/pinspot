@@ -90,7 +90,7 @@ export default function DashboardMap({
       marker.bindPopup(popupContent)
       markersRef.current?.addLayer(marker)
     })
-  }, [pins])
+  }, [pins, pinIcon])
 
   const handleAddPin = async (pinData: any) => {
     try {

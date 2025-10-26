@@ -139,7 +139,7 @@ export default function LeafletMapComponent({
 
       markersRef.current?.addLayer(marker)
     })
-  }, [pins, mapReady, onSelectPin])
+  }, [pins, mapReady, onSelectPin, pinIcon])
 
   return (
     <div className="relative w-full h-full rounded-lg overflow-hidden shadow-lg">
