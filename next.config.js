@@ -13,7 +13,7 @@ const nextConfig = {
     ],
   },
   experimental: {
-    serverComponentsExternalPackages: ['google-auth-library'],
+    serverComponentsExternalPackages: ['google-auth-library', 'googleapis'],
   },
 };
 

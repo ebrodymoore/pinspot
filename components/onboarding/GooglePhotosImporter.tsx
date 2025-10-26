@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { getAuthorizationUrl } from '@/lib/google-photos'
 
 interface GooglePhotosImporterProps {
   userId: string
@@ -24,9 +23,20 @@ export default function GooglePhotosImporter({
     setStep('importing')
 
     try {
-      // Get Google authorization URL
-      const authUrl = getAuthorizationUrl()
-      window.location.href = authUrl
+      // Use Supabase OAuth for Google Photos
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          scopes: 'https://www.googleapis.com/auth/photoslibrary.readonly',
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      })
+
+      if (error) throw error
     } catch (error) {
       console.error('Error starting import:', error)
       setImporting(false)
