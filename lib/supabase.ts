@@ -7,13 +7,9 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables')
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-  },
-})
+// Create Supabase client without session persistence to avoid window errors at build time
+// Session persistence is handled by the '@supabase/auth-helpers-nextjs' package in the layout
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 export const supabaseAdmin = (() => {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
