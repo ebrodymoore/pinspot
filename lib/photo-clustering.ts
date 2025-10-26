@@ -1,7 +1,5 @@
-import point from '@turf/point'
-import distance from '@turf/distance'
-import centroid from '@turf/centroid'
-import featureCollection from '@turf/feature-collection'
+// @ts-ignore - Turf has module resolution issues in strict mode
+import * as turf from '@turf/turf'
 import { reverseGeocode } from './geocoding'
 import type { PhotoWithLocation, LocationCluster } from './types'
 
@@ -23,7 +21,7 @@ export async function clusterPhotosByLocation(
     }
 
     const basePhoto = photos[i]
-    const basePoint = point([basePhoto.longitude, basePhoto.latitude])
+    const basePoint = turf.point([basePhoto.longitude, basePhoto.latitude])
 
     const clusterPhotos: PhotoWithLocation[] = [basePhoto]
     processedIndices.add(i)
@@ -35,9 +33,9 @@ export async function clusterPhotosByLocation(
       }
 
       const otherPhoto = photos[j]
-      const otherPoint = point([otherPhoto.longitude, otherPhoto.latitude])
+      const otherPoint = turf.point([otherPhoto.longitude, otherPhoto.latitude])
 
-      const dist = distance(basePoint, otherPoint, { units: 'kilometers' })
+      const dist = turf.distance(basePoint, otherPoint, { units: 'kilometers' })
 
       if (dist <= CLUSTER_RADIUS_KM) {
         clusterPhotos.push(otherPhoto)
@@ -46,8 +44,8 @@ export async function clusterPhotosByLocation(
     }
 
     // Calculate cluster center
-    const points = clusterPhotos.map(p => point([p.longitude, p.latitude]))
-    const centroidFeature = centroid(featureCollection(points))
+    const points = clusterPhotos.map(p => turf.point([p.longitude, p.latitude]))
+    const centroidFeature = turf.centroid(turf.featureCollection(points))
     const [longitude, latitude] = centroidFeature.geometry.coordinates
 
     // Get location name
@@ -79,9 +77,9 @@ export function calculateDistance(
   lat2: number,
   lon2: number
 ): number {
-  const point1 = point([lon1, lat1])
-  const point2 = point([lon2, lat2])
-  return distance(point1, point2, { units: 'kilometers' })
+  const point1 = turf.point([lon1, lat1])
+  const point2 = turf.point([lon2, lat2])
+  return turf.distance(point1, point2, { units: 'kilometers' })
 }
 
 export function getPhotoGroupsWithinRadius(
