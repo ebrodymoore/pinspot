@@ -29,6 +29,7 @@ export default function PublicProfilePage() {
             created_at,
             pins (
               id,
+              user_id,
               latitude,
               longitude,
               location_name,
