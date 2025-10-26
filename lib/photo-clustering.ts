@@ -1,4 +1,7 @@
-import { point, distance, centroid, featureCollection } from '@turf/turf'
+import point from '@turf/point'
+import distance from '@turf/distance'
+import centroid from '@turf/centroid'
+import featureCollection from '@turf/feature-collection'
 import { reverseGeocode } from './geocoding'
 import type { PhotoWithLocation, LocationCluster } from './types'
 
