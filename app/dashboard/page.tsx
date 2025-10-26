@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
 import DashboardMap from '@/components/dashboard/DashboardMap'
 import DashboardStats from '@/components/dashboard/DashboardStats'
@@ -228,10 +229,12 @@ export default function DashboardPage() {
                   {pin.photos.length > 0 && (
                     <div className="flex gap-2 overflow-x-auto">
                       {pin.photos.map((photo) => (
-                        <img
+                        <Image
                           key={photo.id}
                           src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/photos/${photo.storage_path}`}
                           alt="Travel photo"
+                          width={80}
+                          height={80}
                           className="h-20 w-20 object-cover rounded"
                         />
                       ))}
