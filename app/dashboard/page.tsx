@@ -4,11 +4,17 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
+import dynamic from 'next/dynamic'
 import { supabase } from '@/lib/supabase'
-import DashboardMap from '@/components/dashboard/DashboardMap'
 import DashboardStats from '@/components/dashboard/DashboardStats'
 import PinFilters from '@/components/dashboard/PinFilters'
 import type { Pin, Photo, Tag } from '@/lib/types'
+
+// Dynamically import DashboardMap to avoid Leaflet initialization during build
+const DashboardMap = dynamic(() => import('@/components/dashboard/DashboardMap'), {
+  ssr: false,
+  loading: () => <div className="bg-white rounded-lg shadow-lg overflow-hidden h-96 flex items-center justify-center">Loading map...</div>,
+})
 
 export default function DashboardPage() {
   const router = useRouter()

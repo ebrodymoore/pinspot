@@ -6,7 +6,10 @@
       "Bash(npx create-next-app:*)",
       "Bash(rm:*)",
       "Read(//private/tmp/**)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(git push)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nUse dynamic import for DashboardMap to prevent Leaflet initialization during build\n\nLeaflet accesses browser APIs when imported, which causes errors during server-side\nbuilds. Using dynamic import with ssr: false ensures Leaflet only loads in the browser.\n\nThis fixes the ''window is not defined'' error during the pre-render phase.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
     ],
     "deny": [],
     "ask": []
