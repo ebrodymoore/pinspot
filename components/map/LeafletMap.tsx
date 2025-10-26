@@ -68,40 +68,38 @@ export default function LeafletMapComponent({
     map.zoomControl.setPosition('topleft')
 
     // Add locate control
-    const locateControl = L.control({
-      position: 'topleft',
+    const LocateControl = L.Control.extend({
+      onAdd: () => {
+        const btn = L.DomUtil.create('button', 'leaflet-control-locate')
+        btn.title = 'Locate me'
+        btn.innerHTML = '🎯'
+        btn.style.cssText = `
+          background-color: white;
+          border: 2px solid #ccc;
+          border-radius: 4px;
+          cursor: pointer;
+          padding: 8px 12px;
+          font-size: 16px;
+          width: 36px;
+          height: 36px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-top: 10px;
+        `
+
+        btn.addEventListener('click', () => {
+          navigator.geolocation.getCurrentPosition((position) => {
+            const { latitude, longitude } = position.coords
+            map.setView([latitude, longitude], 13)
+          })
+        })
+
+        return btn
+      },
     })
 
-    locateControl.onAdd = () => {
-      const btn = L.DomUtil.create('button', 'leaflet-control-locate')
-      btn.title = 'Locate me'
-      btn.innerHTML = '🎯'
-      btn.style.cssText = `
-        background-color: white;
-        border: 2px solid #ccc;
-        border-radius: 4px;
-        cursor: pointer;
-        padding: 8px 12px;
-        font-size: 16px;
-        width: 36px;
-        height: 36px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-top: 10px;
-      `
-
-      btn.addEventListener('click', () => {
-        navigator.geolocation.getCurrentPosition((position) => {
-          const { latitude, longitude } = position.coords
-          map.setView([latitude, longitude], 13)
-        })
-      })
-
-      return btn
-    }
-
-    locateControl.addTo(map)
+    new LocateControl({ position: 'topleft' }).addTo(map)
 
     mapRef.current = map
 
