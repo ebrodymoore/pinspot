@@ -19,31 +19,22 @@ export default function SignupPage() {
     setError(null)
 
     try {
-      // First, sign up with Supabase Auth
+      // Sign up with Supabase Auth
       const { data, error: authError } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            username,
+          },
+        },
       })
 
       if (authError) throw authError
 
       if (!data.user) throw new Error('Failed to create user')
 
-      // Then create the user profile
-      const { error: profileError } = await supabase
-        .from('users')
-        .insert([
-          {
-            id: data.user.id,
-            email,
-            username,
-            is_public: false,
-            created_at: new Date().toISOString(),
-          },
-        ])
-
-      if (profileError) throw profileError
-
+      // Database trigger will automatically create the user profile
       router.push('/onboarding')
     } catch (err: any) {
       setError(err.message || 'An error occurred')

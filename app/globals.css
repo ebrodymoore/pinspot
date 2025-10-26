@@ -10,6 +10,22 @@ body {
   background-color: #f8fafc;
 }
 
+/* Input field styling */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+textarea {
+  background-color: white !important;
+  color: #000 !important;
+}
+
+input[type="text"]::placeholder,
+input[type="email"]::placeholder,
+input[type="password"]::placeholder,
+textarea::placeholder {
+  color: #6b7280 !important;
+}
+
 /* Leaflet styles */
 .leaflet-container {
   font-family: inherit;
