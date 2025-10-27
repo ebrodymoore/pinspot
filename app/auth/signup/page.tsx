@@ -97,9 +97,20 @@ export default function SignupPage() {
     setError(null)
 
     try {
+      console.log('🔐 [SignupPage] Starting email signup', { email, username })
       authLogger.authSignupStart(email, 'email')
       authLogger.debug('SignupPage', 'Starting email signup', { email, username })
 
+      // Validate inputs
+      if (!email || !password || !username) {
+        const validationError = 'Email, password, and username are required'
+        console.error('❌ [SignupPage] Validation error:', validationError)
+        setError(validationError)
+        setLoading(false)
+        return
+      }
+
+      console.log('📤 [SignupPage] Calling supabase.auth.signUp')
       // Sign up with Supabase Auth
       const { data, error: authError } = await supabase.auth.signUp({
         email,
@@ -111,27 +122,38 @@ export default function SignupPage() {
         },
       })
 
+      console.log('📨 [SignupPage] Response from Supabase:', { hasError: !!authError, data: !!data })
+
       if (authError) {
+        const errorMsg = `Signup Error [${authError.status}]: ${authError.message}`
+        console.error('❌ [SignupPage] Auth error:', errorMsg)
         authLogger.authSignupError(email, authError.message)
-        throw authError
+        setError(errorMsg)
+        setLoading(false)
+        return
       }
 
       if (!data.user) {
         const err = 'Failed to create user - no user returned from Supabase'
+        console.error('❌ [SignupPage]', err)
         authLogger.authSignupError(email, err)
-        throw new Error(err)
+        setError(err)
+        setLoading(false)
+        return
       }
 
+      console.log('✅ [SignupPage] Signup successful', { userId: data.user.id, email, username })
       authLogger.authSignupSuccess(data.user.id, email)
       authLogger.info('SignupPage', 'Email signup successful, database trigger will create profile')
 
       // Database trigger will automatically create the user profile
+      console.log('🚀 [SignupPage] Redirecting to /onboarding')
       router.push('/onboarding')
     } catch (err: any) {
       const errorMsg = err.message || 'An error occurred during sign up'
+      console.error('❌ [SignupPage] Unexpected error:', err)
       setError(errorMsg)
       authLogger.error('SignupPage', 'Email signup error', err as Error, { email, username })
-    } finally {
       setLoading(false)
     }
   }

@@ -49,30 +49,54 @@ export default function LoginPage() {
     setError(null)
 
     try {
+      // Log to console immediately
+      console.log('🔐 [LoginPage] Starting email sign in', { email })
       authLogger.authSigninStart(email, 'email')
 
-      const { error } = await supabase.auth.signInWithPassword({
+      // Validate inputs
+      if (!email || !password) {
+        const validationError = 'Email and password are required'
+        console.error('❌ [LoginPage] Validation error:', validationError)
+        setError(validationError)
+        setLoading(false)
+        return
+      }
+
+      console.log('📤 [LoginPage] Calling supabase.auth.signInWithPassword')
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
+      console.log('📨 [LoginPage] Response from Supabase:', { hasError: !!error, data: !!data })
+
       if (error) {
+        const errorMsg = `Auth Error [${error.status}]: ${error.message}`
+        console.error('❌ [LoginPage] Auth error:', errorMsg)
         authLogger.authSigninError(email, error.message)
-        throw error
+        setError(errorMsg)
+        setLoading(false)
+        return
       }
 
-      // Get the user after successful sign in
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        authLogger.authSigninSuccess(user.id, email)
+      if (!data.user) {
+        const errorMsg = 'Sign in succeeded but no user data returned'
+        console.error('❌ [LoginPage]', errorMsg)
+        setError(errorMsg)
+        setLoading(false)
+        return
       }
 
+      console.log('✅ [LoginPage] Sign in successful', { userId: data.user.id, email })
+      authLogger.authSigninSuccess(data.user.id, email)
+
+      console.log('🚀 [LoginPage] Redirecting to /onboarding')
       router.push('/onboarding')
     } catch (err: any) {
       const errorMsg = err.message || 'An error occurred during sign in'
+      console.error('❌ [LoginPage] Unexpected error:', err)
       setError(errorMsg)
       authLogger.error('LoginPage', 'Email sign in error', err as Error, { email })
-    } finally {
       setLoading(false)
     }
   }
