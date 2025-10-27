@@ -151,9 +151,26 @@ export default function SignupPage() {
 
       console.log('✅ [SignupPage] Signup successful', { userId: data.user.id, email, username })
       authLogger.authSignupSuccess(data.user.id, email)
-      authLogger.info('SignupPage', 'Email signup successful, database trigger will create profile')
 
-      // Database trigger will automatically create the user profile
+      // Create user profile directly (fallback if trigger doesn't work)
+      console.log('📝 [SignupPage] Creating user profile in database')
+      const { error: profileError } = await supabase
+        .from('users')
+        .insert([
+          {
+            id: data.user.id,
+            email,
+            username,
+          },
+        ])
+
+      if (profileError) {
+        console.warn('⚠️ [SignupPage] Profile creation warning (may have been created by trigger):', profileError.message)
+        // Don't fail signup if profile creation fails, trigger might have already created it
+      } else {
+        console.log('✅ [SignupPage] User profile created successfully')
+      }
+
       console.log('🚀 [SignupPage] Redirecting to /onboarding')
       router.push('/onboarding')
     } catch (err: any) {
