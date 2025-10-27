@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import { authLogger } from '@/lib/auth-logger'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -15,12 +16,27 @@ export default function LoginPage() {
   // Handle OAuth redirect
   useEffect(() => {
     const handleAuthCallback = async () => {
-      // Check if user is already authenticated from OAuth
-      const { data: { user } } = await supabase.auth.getUser()
+      try {
+        authLogger.debug('LoginPage', 'Checking for existing auth session')
 
-      if (user) {
-        // User is authenticated via OAuth or session
-        router.push('/onboarding')
+        // Check if user is already authenticated from OAuth
+        const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+        if (authError) {
+          authLogger.warn('LoginPage', 'Error checking auth session', authError.message)
+          return
+        }
+
+        if (user) {
+          authLogger.authSessionCheck(user.id, true)
+          authLogger.info('LoginPage', 'Authenticated user detected, redirecting to onboarding')
+          router.push('/onboarding')
+        } else {
+          authLogger.authSessionCheck(null, false)
+          authLogger.debug('LoginPage', 'No authenticated user found')
+        }
+      } catch (err) {
+        authLogger.error('LoginPage', 'Error in auth callback', err as Error)
       }
     }
 
@@ -33,16 +49,29 @@ export default function LoginPage() {
     setError(null)
 
     try {
+      authLogger.authSigninStart(email, 'email')
+
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
-      if (error) throw error
+      if (error) {
+        authLogger.authSigninError(email, error.message)
+        throw error
+      }
+
+      // Get the user after successful sign in
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        authLogger.authSigninSuccess(user.id, email)
+      }
 
       router.push('/onboarding')
     } catch (err: any) {
-      setError(err.message || 'An error occurred')
+      const errorMsg = err.message || 'An error occurred during sign in'
+      setError(errorMsg)
+      authLogger.error('LoginPage', 'Email sign in error', err as Error, { email })
     } finally {
       setLoading(false)
     }
@@ -53,17 +82,27 @@ export default function LoginPage() {
     setError(null)
 
     try {
+      const redirectUrl = `${window.location.origin}/auth/login`
+      authLogger.oauthStart('google', redirectUrl)
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/login`,
+          redirectTo: redirectUrl,
           scopes: 'https://www.googleapis.com/auth/photoslibrary.readonly',
         },
       })
 
-      if (error) throw error
+      if (error) {
+        authLogger.oauthError('google', error.message)
+        throw error
+      }
+
+      authLogger.info('LoginPage', 'Google OAuth redirect initiated')
     } catch (err: any) {
-      setError(err.message || 'An error occurred')
+      const errorMsg = err.message || 'An error occurred with Google sign in'
+      setError(errorMsg)
+      authLogger.oauthError('google', err as Error)
       setLoading(false)
     }
   }

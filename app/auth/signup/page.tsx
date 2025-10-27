@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import { authLogger } from '@/lib/auth-logger'
 
 export default function SignupPage() {
   const router = useRouter()
@@ -16,37 +17,74 @@ export default function SignupPage() {
   // Handle OAuth redirect
   useEffect(() => {
     const handleAuthCallback = async () => {
-      // Check if user is already authenticated from OAuth
-      const { data: { user } } = await supabase.auth.getUser()
+      try {
+        authLogger.debug('SignupPage', 'Checking for OAuth callback')
 
-      if (user) {
-        // User is authenticated via OAuth
-        // Check if profile exists
-        const { data: profile } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', user.id)
-          .single()
+        // Check if user is already authenticated from OAuth
+        const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-        if (!profile) {
-          // Create user profile for OAuth users
-          const username = user.email?.split('@')[0] || `user_${Date.now()}`
-          try {
-            await supabase.from('users').insert([
-              {
-                id: user.id,
-                email: user.email,
-                username,
-                is_public: false,
-              },
-            ])
-          } catch (err) {
-            console.error('Error creating profile:', err)
-          }
+        if (authError) {
+          authLogger.warn('SignupPage', 'Error checking auth session', authError.message)
+          return
         }
 
-        // Redirect to onboarding
-        router.push('/onboarding')
+        if (user) {
+          authLogger.authSessionCheck(user.id, true)
+          authLogger.oauthCallbackDetected('google', !!user)
+          authLogger.info('SignupPage', 'OAuth user detected, checking for profile')
+
+          // Check if profile exists
+          const { data: profile, error: profileError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', user.id)
+            .single()
+
+          if (profileError && profileError.code !== 'PGRST116') {
+            authLogger.userProfileError(user.id, profileError.message, 'Profile query error')
+            return
+          }
+
+          if (!profile) {
+            // Create user profile for OAuth users
+            const autoUsername = user.email?.split('@')[0] || `user_${Date.now()}`
+            authLogger.debug('SignupPage', 'Creating profile for OAuth user', {
+              userId: user.id,
+              email: user.email,
+              username: autoUsername,
+            })
+
+            try {
+              await supabase.from('users').insert([
+                {
+                  id: user.id,
+                  email: user.email,
+                  username: autoUsername,
+                  is_public: false,
+                },
+              ])
+
+              authLogger.userProfileCreated(user.id, user.email || '', autoUsername)
+            } catch (err) {
+              authLogger.userProfileError(user.id, err as Error, 'Failed to create profile')
+              // Continue anyway, profile might have been created by trigger
+            }
+          } else {
+            authLogger.debug('SignupPage', 'Profile already exists for OAuth user', {
+              userId: user.id,
+              username: profile.username,
+            })
+          }
+
+          authLogger.authSignupSuccess(user.id, user.email || '')
+          authLogger.info('SignupPage', 'OAuth signup complete, redirecting to onboarding')
+          router.push('/onboarding')
+        } else {
+          authLogger.authSessionCheck(null, false)
+          authLogger.debug('SignupPage', 'No OAuth session found')
+        }
+      } catch (err) {
+        authLogger.error('SignupPage', 'Error in OAuth callback', err as Error)
       }
     }
 
@@ -59,6 +97,9 @@ export default function SignupPage() {
     setError(null)
 
     try {
+      authLogger.authSignupStart(email, 'email')
+      authLogger.debug('SignupPage', 'Starting email signup', { email, username })
+
       // Sign up with Supabase Auth
       const { data, error: authError } = await supabase.auth.signUp({
         email,
@@ -70,14 +111,26 @@ export default function SignupPage() {
         },
       })
 
-      if (authError) throw authError
+      if (authError) {
+        authLogger.authSignupError(email, authError.message)
+        throw authError
+      }
 
-      if (!data.user) throw new Error('Failed to create user')
+      if (!data.user) {
+        const err = 'Failed to create user - no user returned from Supabase'
+        authLogger.authSignupError(email, err)
+        throw new Error(err)
+      }
+
+      authLogger.authSignupSuccess(data.user.id, email)
+      authLogger.info('SignupPage', 'Email signup successful, database trigger will create profile')
 
       // Database trigger will automatically create the user profile
       router.push('/onboarding')
     } catch (err: any) {
-      setError(err.message || 'An error occurred')
+      const errorMsg = err.message || 'An error occurred during sign up'
+      setError(errorMsg)
+      authLogger.error('SignupPage', 'Email signup error', err as Error, { email, username })
     } finally {
       setLoading(false)
     }
@@ -88,17 +141,27 @@ export default function SignupPage() {
     setError(null)
 
     try {
+      const redirectUrl = `${window.location.origin}/auth/signup`
+      authLogger.oauthStart('google', redirectUrl)
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/signup`,
+          redirectTo: redirectUrl,
           scopes: 'https://www.googleapis.com/auth/photoslibrary.readonly',
         },
       })
 
-      if (error) throw error
+      if (error) {
+        authLogger.oauthError('google', error.message)
+        throw error
+      }
+
+      authLogger.info('SignupPage', 'Google OAuth redirect initiated')
     } catch (err: any) {
-      setError(err.message || 'An error occurred')
+      const errorMsg = err.message || 'An error occurred with Google sign up'
+      setError(errorMsg)
+      authLogger.oauthError('google', err as Error)
       setLoading(false)
     }
   }
