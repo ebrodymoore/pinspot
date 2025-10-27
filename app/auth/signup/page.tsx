@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
@@ -12,6 +12,46 @@ export default function SignupPage() {
   const [username, setUsername] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Handle OAuth redirect
+  useEffect(() => {
+    const handleAuthCallback = async () => {
+      // Check if user is already authenticated from OAuth
+      const { data: { user } } = await supabase.auth.getUser()
+
+      if (user) {
+        // User is authenticated via OAuth
+        // Check if profile exists
+        const { data: profile } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', user.id)
+          .single()
+
+        if (!profile) {
+          // Create user profile for OAuth users
+          const username = user.email?.split('@')[0] || `user_${Date.now()}`
+          try {
+            await supabase.from('users').insert([
+              {
+                id: user.id,
+                email: user.email,
+                username,
+                is_public: false,
+              },
+            ])
+          } catch (err) {
+            console.error('Error creating profile:', err)
+          }
+        }
+
+        // Redirect to onboarding
+        router.push('/onboarding')
+      }
+    }
+
+    handleAuthCallback()
+  }, [router])
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -51,7 +91,7 @@ export default function SignupPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${window.location.origin}/auth/signup`,
           scopes: 'https://www.googleapis.com/auth/photoslibrary.readonly',
         },
       })

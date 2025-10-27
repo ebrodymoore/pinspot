@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
@@ -11,6 +11,21 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Handle OAuth redirect
+  useEffect(() => {
+    const handleAuthCallback = async () => {
+      // Check if user is already authenticated from OAuth
+      const { data: { user } } = await supabase.auth.getUser()
+
+      if (user) {
+        // User is authenticated via OAuth or session
+        router.push('/onboarding')
+      }
+    }
+
+    handleAuthCallback()
+  }, [router])
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -41,7 +56,7 @@ export default function LoginPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${window.location.origin}/auth/login`,
           scopes: 'https://www.googleapis.com/auth/photoslibrary.readonly',
         },
       })
