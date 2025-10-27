@@ -4,20 +4,14 @@ import { useEffect, useRef } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import type { Pin, Photo, Tag } from '@/lib/types'
+import { createEmojiPinIcon } from '@/lib/map-icons'
 
 interface PublicProfileMapProps {
   pins: (Pin & { photos: Photo[]; tags: Tag[] })[]
 }
 
-// Custom pin icon
-const pinIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-})
+// Custom pin icon - emoji
+const pinIcon = createEmojiPinIcon()
 
 export default function PublicProfileMap({ pins }: PublicProfileMapProps) {
   const mapRef = useRef<L.Map | null>(null)

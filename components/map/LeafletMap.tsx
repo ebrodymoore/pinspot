@@ -5,6 +5,7 @@ import L, { LatLng, Map as LeafletMap } from 'leaflet'
 import 'leaflet.markercluster'
 import type { Pin, Photo, Tag } from '@/lib/types'
 import PinPopup from './PinPopup'
+import { createEmojiPinIcon } from '@/lib/map-icons'
 
 interface LeafletMapProps {
   pins: (Pin & { photos: Photo[]; tags: Tag[] })[]
@@ -23,13 +24,8 @@ export default function LeafletMapComponent({
   const markersRef = useRef<L.MarkerClusterGroup | null>(null)
   const [mapReady, setMapReady] = useState(false)
 
-  // Custom pin icon
-  const pinIcon = L.icon({
-    iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCAzMiA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTYgMEM5LjkzIDAgNSA0LjkzIDUgMTFjMCA1LjI1IDEwLjk3IDI4LjEgMTEgMjguMjVIMzBzLTAgMC0xLTIuMTZDMjkgMzYuMSAyNyAyNi4yNSAyNyAxMWMwLTYuMDctNC45My0xMS0xMS0xMVoiIGZpbGw9IiMzQjgyRjYiLz48L3N2Zz4=',
-    iconSize: [32, 48],
-    iconAnchor: [16, 48],
-    popupAnchor: [0, -48],
-  })
+  // Custom pin icon - emoji
+  const pinIcon = createEmojiPinIcon()
 
   useEffect(() => {
     if (mapRef.current) return
