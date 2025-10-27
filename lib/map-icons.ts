@@ -2,29 +2,14 @@ import L from 'leaflet'
 
 /**
  * Create a pin icon using emoji
- * Uses the 📍 emoji as the map marker
+ * Uses the 📍 emoji as the map marker with transparent background
  */
 export function createEmojiPinIcon() {
   return L.divIcon({
-    html: `
-      <div style="
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 40px;
-        height: 40px;
-        background: white;
-        border-radius: 50%;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        border: 2px solid #3B82F6;
-        font-size: 24px;
-      ">
-        📍
-      </div>
-    `,
-    iconSize: [40, 40],
-    iconAnchor: [20, 40],
-    popupAnchor: [0, -40],
+    html: `<div style="font-size: 32px; line-height: 1;">📍</div>`,
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+    popupAnchor: [0, -32],
     className: 'emoji-pin-icon',
   })
 }
