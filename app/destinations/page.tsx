@@ -17,6 +17,8 @@ export default function DestinationsPage() {
   const [activeTab, setActiveTab] = useState<'destinations' | 'settings'>('destinations')
   const [showForm, setShowForm] = useState(false)
   const [editingPin, setEditingPin] = useState<(Pin & { photos: Photo[]; tags: Tag[] }) | null>(null)
+  const [isPublic, setIsPublic] = useState(false)
+  const [savingProfile, setSavingProfile] = useState(false)
 
   useEffect(() => {
     const getUser = async () => {
@@ -31,6 +33,18 @@ export default function DestinationsPage() {
 
       setUser(user)
       await fetchDestinations(user.id)
+
+      // Fetch user profile to get public status
+      const { data: profile } = await supabase
+        .from('users')
+        .select('is_public')
+        .eq('id', user.id)
+        .single()
+
+      if (profile) {
+        setIsPublic(profile.is_public)
+      }
+
       setLoading(false)
     }
 
@@ -98,6 +112,26 @@ export default function DestinationsPage() {
     } catch (error) {
       console.error('Error deleting destination:', error)
       alert('Failed to delete destination')
+    }
+  }
+
+  const handleTogglePublic = async () => {
+    setSavingProfile(true)
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({ is_public: !isPublic })
+        .eq('id', user.id)
+
+      if (error) throw error
+
+      setIsPublic(!isPublic)
+      alert(isPublic ? 'Profile is now private' : 'Profile is now public!')
+    } catch (error) {
+      console.error('Error updating profile:', error)
+      alert('Failed to update profile')
+    } finally {
+      setSavingProfile(false)
     }
   }
 
@@ -256,18 +290,36 @@ export default function DestinationsPage() {
 
               {/* Public Profile Setting */}
               <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center mb-4">
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">Public Profile</h3>
                     <p className="text-gray-600 mt-1">Make your destinations visible to others</p>
                   </div>
+                  <button
+                    onClick={handleTogglePublic}
+                    disabled={savingProfile}
+                    className={`relative inline-flex h-8 w-14 items-center rounded-full transition ${
+                      isPublic ? 'bg-blue-600' : 'bg-gray-300'
+                    } ${savingProfile ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                  >
+                    <span
+                      className={`inline-block h-6 w-6 transform rounded-full bg-white transition ${
+                        isPublic ? 'translate-x-7' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                </div>
+                <p className="text-sm text-gray-600 mb-4">
+                  {isPublic ? '✓ Your profile is public' : '✗ Your profile is private'}
+                </p>
+                {isPublic && (
                   <Link
                     href={`/map/${user?.email?.split('@')[0]}`}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+                    className="inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
                   >
-                    View Profile
+                    View Public Profile
                   </Link>
-                </div>
+                )}
               </div>
 
               {/* Account Setting */}
