@@ -358,7 +358,7 @@ export default function DestinationForm({ userId, pin, onClose, onSave }: Destin
           </svg>
           <p className="text-gray-700 font-medium">Click to upload photos or drag and drop</p>
           <p className="text-sm text-gray-500">PNG, JPG, GIF up to 10MB</p>
-        </button
+        </button>
 
         {photos.length > 0 && (
           <div className="mt-4 grid grid-cols-4 gap-4">
