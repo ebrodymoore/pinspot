@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
+import { searchPlaces, formatPlace, type NominatimPlace } from '@/lib/nominatim'
 import type { Pin, Photo, Tag } from '@/lib/types'
 
 interface DestinationFormProps {
@@ -13,7 +14,8 @@ interface DestinationFormProps {
 }
 
 export default function DestinationForm({ userId, pin, onClose, onSave }: DestinationFormProps) {
-  const [locationName, setLocationName] = useState(pin?.location_name || '')
+  const [locationName, setLocationName] = useState(pin?.location_name.replace('⭐ ', '') || '')
+  const [addressInput, setAddressInput] = useState(pin?.location_name.replace('⭐ ', '') || '')
   const [visitDate, setVisitDate] = useState(pin?.visit_date || '')
   const [notes, setNotes] = useState(pin?.notes || '')
   const [latitude, setLatitude] = useState(pin?.latitude.toString() || '')
@@ -25,7 +27,50 @@ export default function DestinationForm({ userId, pin, onClose, onSave }: Destin
   const [existingPhotos, setExistingPhotos] = useState<Photo[]>(pin?.photos || [])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [places, setPlaces] = useState<NominatimPlace[]>([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [searchLoading, setSearchLoading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const suggestionsRef = useRef<HTMLDivElement>(null)
+
+  // Handle address search with debounce
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      if (addressInput.length > 2) {
+        setSearchLoading(true)
+        const results = await searchPlaces(addressInput)
+        setPlaces(results)
+        setShowSuggestions(true)
+        setSearchLoading(false)
+      } else {
+        setPlaces([])
+        setShowSuggestions(false)
+      }
+    }, 300)
+
+    return () => clearTimeout(timer)
+  }, [addressInput])
+
+  const handlePlaceSelect = (place: NominatimPlace) => {
+    const formatted = formatPlace(place)
+    setLocationName(formatted.name)
+    setAddressInput(formatted.name)
+    setLatitude(formatted.latitude.toString())
+    setLongitude(formatted.longitude.toString())
+    setShowSuggestions(false)
+  }
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (suggestionsRef.current && !suggestionsRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   const addTag = () => {
     if (tagInput.trim() && !tags.includes(tagInput.trim())) {
@@ -196,16 +241,55 @@ export default function DestinationForm({ userId, pin, onClose, onSave }: Destin
         </div>
       )}
 
-      {/* Location Name */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Location Name *</label>
-        <input
-          type="text"
-          value={locationName}
-          onChange={(e) => setLocationName(e.target.value)}
-          placeholder="e.g., Eiffel Tower, Paris"
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+      {/* Location Search with Autocomplete */}
+      <div className="relative" ref={suggestionsRef}>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Location *</label>
+        <div className="relative">
+          <input
+            type="text"
+            value={addressInput}
+            onChange={(e) => setAddressInput(e.target.value)}
+            onFocus={() => addressInput.length > 2 && setShowSuggestions(true)}
+            placeholder="Search for a location (address, city, landmark)..."
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          {searchLoading && (
+            <div className="absolute right-4 top-10 text-gray-400">
+              <div className="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+            </div>
+          )}
+        </div>
+
+        {/* Autocomplete Suggestions */}
+        {showSuggestions && places.length > 0 && (
+          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-80 overflow-y-auto">
+            {places.map((place) => (
+              <button
+                key={place.place_id}
+                type="button"
+                onClick={() => handlePlaceSelect(place)}
+                className="w-full text-left px-4 py-3 hover:bg-blue-50 border-b border-gray-100 last:border-b-0 transition"
+              >
+                <div className="font-medium text-gray-900">{place.name}</div>
+                <div className="text-sm text-gray-600">{place.display_name}</div>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* No Results */}
+        {showSuggestions && addressInput.length > 2 && places.length === 0 && !searchLoading && (
+          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-4 text-center text-gray-500">
+            No locations found. Try a different search.
+          </div>
+        )}
+
+        {/* Display selected coordinates */}
+        {latitude && longitude && (
+          <p className="mt-2 text-sm text-gray-600">
+            📍 {latitude}, {longitude}
+          </p>
+        )}
       </div>
 
       {/* Favorite Toggle */}
@@ -222,31 +306,9 @@ export default function DestinationForm({ userId, pin, onClose, onSave }: Destin
         </label>
       </div>
 
-      {/* Coordinates */}
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Latitude *</label>
-          <input
-            type="number"
-            step="0.00000001"
-            value={latitude}
-            onChange={(e) => setLatitude(e.target.value)}
-            placeholder="-33.8688"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Longitude *</label>
-          <input
-            type="number"
-            step="0.00000001"
-            value={longitude}
-            onChange={(e) => setLongitude(e.target.value)}
-            placeholder="151.2093"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-      </div>
+      {/* Coordinates - Hidden inputs, automatically filled by location search */}
+      <input type="hidden" value={latitude} onChange={(e) => setLatitude(e.target.value)} />
+      <input type="hidden" value={longitude} onChange={(e) => setLongitude(e.target.value)} />
 
       {/* Visit Date */}
       <div>
