@@ -120,6 +120,12 @@ export default function DashboardPage() {
 
           <div className="flex items-center space-x-4">
             <Link
+              href="/destinations"
+              className="text-sm font-medium text-gray-700 hover:text-gray-900"
+            >
+              Destinations
+            </Link>
+            <Link
               href={`/map/${user?.email?.split('@')[0]}`}
               className="text-sm font-medium text-gray-700 hover:text-gray-900"
             >
