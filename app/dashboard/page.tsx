@@ -19,6 +19,7 @@ const DashboardMap = dynamic(() => import('@/components/dashboard/DashboardMap')
 export default function DashboardPage() {
   const router = useRouter()
   const [user, setUser] = useState<any>(null)
+  const [username, setUsername] = useState<string>('')
   const [pins, setPins] = useState<(Pin & { photos: Photo[]; tags: Tag[] })[]>([])
   const [filteredPins, setFilteredPins] = useState<(Pin & { photos: Photo[]; tags: Tag[] })[]>([])
   const [loading, setLoading] = useState(true)
@@ -38,6 +39,18 @@ export default function DashboardPage() {
       }
 
       setUser(user)
+
+      // Fetch user profile to get username
+      const { data: profile } = await supabase
+        .from('users')
+        .select('username')
+        .eq('id', user.id)
+        .single()
+
+      if (profile) {
+        setUsername(profile.username)
+      }
+
       await fetchPins(user.id)
       setLoading(false)
     }
@@ -126,7 +139,7 @@ export default function DashboardPage() {
               Destinations
             </Link>
             <Link
-              href={`/map/${user?.email?.split('@')[0]}`}
+              href={`/map/${username}`}
               className="text-sm font-medium text-gray-700 hover:text-gray-900"
             >
               Public Profile
