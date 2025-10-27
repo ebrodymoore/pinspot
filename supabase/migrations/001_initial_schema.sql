@@ -101,7 +101,7 @@ CREATE POLICY "users_can_update_own_profile"
 
 CREATE POLICY "users_can_insert_own_profile"
   ON users FOR INSERT
-  WITH CHECK (auth.uid() = id);
+  WITH CHECK (auth.uid()::text = id::text);
 
 -- RLS Policies for pins table
 CREATE POLICY "users_can_view_own_pins"
