@@ -163,7 +163,11 @@ export default function SignupPage() {
     setError(null)
 
     try {
-      const redirectUrl = `${window.location.origin}/auth/signup`
+      // Get the correct origin - use location.origin which will be the current domain
+      const origin = typeof window !== 'undefined' ? window.location.origin : ''
+      const redirectUrl = `${origin}/auth/signup`
+
+      console.log('🔐 [SignupPage] Starting Google signup', { origin, redirectUrl })
       authLogger.oauthStart('google', redirectUrl)
 
       const { error } = await supabase.auth.signInWithOAuth({
@@ -175,13 +179,16 @@ export default function SignupPage() {
       })
 
       if (error) {
+        console.error('❌ [SignupPage] Google OAuth error:', error)
         authLogger.oauthError('google', error.message)
         throw error
       }
 
+      console.log('✅ [SignupPage] Google OAuth redirect initiated to:', redirectUrl)
       authLogger.info('SignupPage', 'Google OAuth redirect initiated')
     } catch (err: any) {
       const errorMsg = err.message || 'An error occurred with Google sign up'
+      console.error('❌ [SignupPage] Google signup error:', errorMsg)
       setError(errorMsg)
       authLogger.oauthError('google', err as Error)
       setLoading(false)

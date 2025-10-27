@@ -106,7 +106,11 @@ export default function LoginPage() {
     setError(null)
 
     try {
-      const redirectUrl = `${window.location.origin}/auth/login`
+      // Get the correct origin - use location.origin which will be the current domain
+      const origin = typeof window !== 'undefined' ? window.location.origin : ''
+      const redirectUrl = `${origin}/auth/login`
+
+      console.log('🔐 [LoginPage] Starting Google login', { origin, redirectUrl })
       authLogger.oauthStart('google', redirectUrl)
 
       const { error } = await supabase.auth.signInWithOAuth({
@@ -118,13 +122,16 @@ export default function LoginPage() {
       })
 
       if (error) {
+        console.error('❌ [LoginPage] Google OAuth error:', error)
         authLogger.oauthError('google', error.message)
         throw error
       }
 
+      console.log('✅ [LoginPage] Google OAuth redirect initiated to:', redirectUrl)
       authLogger.info('LoginPage', 'Google OAuth redirect initiated')
     } catch (err: any) {
       const errorMsg = err.message || 'An error occurred with Google sign in'
+      console.error('❌ [LoginPage] Google login error:', errorMsg)
       setError(errorMsg)
       authLogger.oauthError('google', err as Error)
       setLoading(false)
