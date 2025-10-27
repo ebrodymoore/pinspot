@@ -247,6 +247,7 @@ END;
 $$ language 'plpgsql';
 
 -- Function to handle new user signup from auth.users
+-- SECURITY DEFINER allows this function to bypass RLS policies
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -259,7 +260,7 @@ BEGIN
   );
   RETURN NEW;
 END;
-$$ language 'plpgsql';
+$$ language 'plpgsql' SECURITY DEFINER SET search_path = public;
 
 -- Trigger to create user profile on auth signup
 CREATE TRIGGER on_auth_user_created
