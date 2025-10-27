@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { authLogger } from '@/lib/auth-logger'
-import { createUserProfile } from '../actions'
 
 export default function SignupPage() {
   const router = useRouter()
@@ -153,17 +152,7 @@ export default function SignupPage() {
       console.log('✅ [SignupPage] Signup successful', { userId: data.user.id, email, username })
       authLogger.authSignupSuccess(data.user.id, email)
 
-      // Create user profile using server action (bypasses RLS)
-      console.log('📝 [SignupPage] Creating user profile in database')
-      const profileResult = await createUserProfile(data.user.id, email, username)
-
-      if (!profileResult.success) {
-        console.warn('⚠️ [SignupPage] Profile creation warning:', profileResult.error)
-        // Don't fail signup if profile creation fails, trigger might have already created it
-      } else {
-        console.log('✅ [SignupPage] User profile created successfully')
-      }
-
+      // Profile will be created on the onboarding page if it doesn't exist
       console.log('🚀 [SignupPage] Redirecting to /onboarding')
       router.push('/onboarding')
     } catch (err: any) {

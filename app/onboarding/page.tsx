@@ -12,13 +12,46 @@ export default function OnboardingPage() {
   const [skipped, setSkipped] = useState(false)
 
   useEffect(() => {
-    const getUser = async () => {
+    const initializeUser = async () => {
       try {
         // First, try to get the session from auth (which should exist right after signup)
         const { data: { session } } = await supabase.auth.getSession()
 
         if (session?.user) {
           console.log('✅ [OnboardingPage] Session found:', { userId: session.user.id })
+
+          // Check if user profile exists in database
+          const { data: profile, error: profileError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', session.user.id)
+            .single()
+
+          if (profileError && profileError.code === 'PGRST116') {
+            // Profile doesn't exist, create it
+            console.log('📝 [OnboardingPage] Creating user profile for new user')
+            const { error: insertError } = await supabase
+              .from('users')
+              .insert([
+                {
+                  id: session.user.id,
+                  email: session.user.email,
+                  username: session.user.email?.split('@')[0] || `user_${Date.now()}`,
+                },
+              ])
+
+            if (insertError) {
+              console.warn('⚠️ [OnboardingPage] Could not create profile:', insertError.message)
+              // Continue anyway - user might be able to use the app
+            } else {
+              console.log('✅ [OnboardingPage] User profile created successfully')
+            }
+          } else if (profileError) {
+            console.warn('⚠️ [OnboardingPage] Error checking profile:', profileError.message)
+          } else {
+            console.log('✅ [OnboardingPage] User profile already exists')
+          }
+
           setUser(session.user)
           setLoading(false)
           return
@@ -42,7 +75,7 @@ export default function OnboardingPage() {
       }
     }
 
-    getUser()
+    initializeUser()
   }, [router])
 
   if (loading) {
