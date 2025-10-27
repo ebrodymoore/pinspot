@@ -87,7 +87,7 @@ export default function Home() {
             ) : (
               <>
                 <Link
-                  href="/auth/login"
+                  href="/auth/signup"
                   className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-lg inline-block"
                 >
                   Get Started
@@ -96,7 +96,7 @@ export default function Home() {
                   href="/auth/login"
                   className="px-8 py-3 bg-white text-blue-600 rounded-lg hover:bg-gray-50 font-medium text-lg border-2 border-blue-600 inline-block"
                 >
-                  Learn More
+                  Sign In
                 </Link>
               </>
             )}
