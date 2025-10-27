@@ -4,8 +4,16 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
+import dynamic from 'next/dynamic'
 import { supabase } from '@/lib/supabase'
+import PinFilters from '@/components/dashboard/PinFilters'
 import type { Pin, Photo, Tag } from '@/lib/types'
+
+// Dynamically import PublicProfileMap to avoid Leaflet initialization during build
+const PublicProfileMap = dynamic(() => import('@/components/map/PublicProfileMap'), {
+  ssr: false,
+  loading: () => <div className="bg-white rounded-lg shadow-lg overflow-hidden h-96 flex items-center justify-center">Loading map...</div>,
+})
 
 export default function PublicProfilePage() {
   const params = useParams()
@@ -13,8 +21,11 @@ export default function PublicProfilePage() {
 
   const [profile, setProfile] = useState<any>(null)
   const [pins, setPins] = useState<(Pin & { photos: Photo[]; tags: Tag[] })[]>([])
+  const [filteredPins, setFilteredPins] = useState<(Pin & { photos: Photo[]; tags: Tag[] })[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [viewMode, setViewMode] = useState<'map' | 'list'>('map')
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -64,7 +75,9 @@ export default function PublicProfilePage() {
         }
 
         setProfile(userData)
-        setPins(userData.pins || [])
+        const pinData = userData.pins || []
+        setPins(pinData)
+        setFilteredPins(pinData)
       } catch (err: any) {
         setError(err.message || 'Error loading profile')
       } finally {
@@ -74,6 +87,19 @@ export default function PublicProfilePage() {
 
     fetchProfile()
   }, [username])
+
+  // Handle filtering
+  useEffect(() => {
+    let filtered = pins
+
+    if (selectedTags.length > 0) {
+      filtered = filtered.filter((pin) =>
+        pin.tags.some((tag) => selectedTags.includes(tag.tag_name))
+      )
+    }
+
+    setFilteredPins(filtered)
+  }, [pins, selectedTags])
 
   if (loading) {
     return (
@@ -199,16 +225,49 @@ export default function PublicProfilePage() {
           </div>
         </div>
 
-        {/* Locations List */}
-        <div className="space-y-4">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Locations</h2>
+        {/* View Controls and Filters */}
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
+          <div className="flex gap-2 mb-4">
+            <button
+              onClick={() => setViewMode('map')}
+              className={`px-4 py-2 rounded-lg font-medium transition ${
+                viewMode === 'map'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Map View
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`px-4 py-2 rounded-lg font-medium transition ${
+                viewMode === 'list'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              List View
+            </button>
+          </div>
 
-          {pins.length === 0 ? (
-            <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-              <p className="text-gray-600">No locations shared yet.</p>
-            </div>
-          ) : (
-            pins.map((pin) => (
+          <PinFilters pins={pins} selectedTags={selectedTags} onTagsChange={setSelectedTags} />
+        </div>
+
+        {/* Map or List View */}
+        {viewMode === 'map' ? (
+          <PublicProfileMap pins={filteredPins} />
+        ) : (
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Locations</h2>
+
+            {filteredPins.length === 0 ? (
+              <div className="bg-white rounded-lg shadow-sm p-12 text-center">
+                <p className="text-gray-600">
+                  {pins.length === 0 ? 'No locations shared yet.' : 'No locations match your filters.'}
+                </p>
+              </div>
+            ) : (
+              filteredPins.map((pin) => (
               <div key={pin.id} className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition">
                 <div className="flex flex-col md:flex-row justify-between md:items-start gap-4">
                   <div className="flex-1">
@@ -263,9 +322,10 @@ export default function PublicProfilePage() {
                   )}
                 </div>
               </div>
-            ))
-          )}
-        </div>
+              ))
+            )}
+          </div>
+        )}
       </div>
     </main>
   )
