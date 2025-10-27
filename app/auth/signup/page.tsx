@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { authLogger } from '@/lib/auth-logger'
-import { createUserProfile } from './actions'
+import { createUserProfile } from '../actions'
 
 export default function SignupPage() {
   const router = useRouter()
