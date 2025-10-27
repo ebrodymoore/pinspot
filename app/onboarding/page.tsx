@@ -13,17 +13,33 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     const getUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      try {
+        // First, try to get the session from auth (which should exist right after signup)
+        const { data: { session } } = await supabase.auth.getSession()
 
-      if (!user) {
+        if (session?.user) {
+          console.log('✅ [OnboardingPage] Session found:', { userId: session.user.id })
+          setUser(session.user)
+          setLoading(false)
+          return
+        }
+
+        // If no session, try getUser() as fallback
+        const { data: { user } } = await supabase.auth.getUser()
+
+        if (!user) {
+          console.log('❌ [OnboardingPage] No authenticated user found, redirecting to login')
+          router.push('/auth/login')
+          return
+        }
+
+        console.log('✅ [OnboardingPage] User found:', { userId: user.id })
+        setUser(user)
+        setLoading(false)
+      } catch (err) {
+        console.error('❌ [OnboardingPage] Error checking auth:', err)
         router.push('/auth/login')
-        return
       }
-
-      setUser(user)
-      setLoading(false)
     }
 
     getUser()
