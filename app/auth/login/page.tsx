@@ -13,11 +13,18 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Handle OAuth redirect
+  // Handle OAuth redirect - only check on initial mount and when hash/URL changes
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        authLogger.debug('LoginPage', 'Checking for existing auth session')
+        // Only process OAuth callback if we have a hash fragment (from OAuth redirect)
+        const hash = typeof window !== 'undefined' ? window.location.hash : ''
+        if (!hash.includes('access_token')) {
+          authLogger.debug('LoginPage', 'No OAuth token in URL, skipping callback')
+          return
+        }
+
+        authLogger.debug('LoginPage', 'Checking for existing auth session from OAuth')
 
         // Check if user is already authenticated from OAuth
         const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -29,14 +36,14 @@ export default function LoginPage() {
 
         if (user) {
           authLogger.authSessionCheck(user.id, true)
-          authLogger.info('LoginPage', 'Authenticated user detected, redirecting to onboarding')
+          authLogger.info('LoginPage', 'Authenticated user detected from OAuth, redirecting to onboarding')
           router.push('/onboarding')
         } else {
           authLogger.authSessionCheck(null, false)
-          authLogger.debug('LoginPage', 'No authenticated user found')
+          authLogger.debug('LoginPage', 'No authenticated user found from OAuth')
         }
       } catch (err) {
-        authLogger.error('LoginPage', 'Error in auth callback', err as Error)
+        authLogger.error('LoginPage', 'Error in OAuth callback', err as Error)
       }
     }
 

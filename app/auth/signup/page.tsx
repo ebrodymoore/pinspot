@@ -14,10 +14,17 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Handle OAuth redirect
+  // Handle OAuth redirect - only check on initial mount and when hash/URL changes
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
+        // Only process OAuth callback if we have a hash fragment (from OAuth redirect)
+        const hash = typeof window !== 'undefined' ? window.location.hash : ''
+        if (!hash.includes('access_token')) {
+          authLogger.debug('SignupPage', 'No OAuth token in URL, skipping callback')
+          return
+        }
+
         authLogger.debug('SignupPage', 'Checking for OAuth callback')
 
         // Check if user is already authenticated from OAuth
